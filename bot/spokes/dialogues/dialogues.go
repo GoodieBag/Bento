@@ -4,7 +4,6 @@ import (
 	"main/bot"
 	"math/rand"
 	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -197,21 +196,18 @@ func (p *Dialogues) Commands() bot.BotCommandMap {
 	return cmdMap
 }
 
-func (p *Dialogues) Handler() interface{} {
-	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if m.Author.ID == s.State.User.ID {
-			return
-		}
+func (p *Dialogues) MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
 
 		if strings.Contains(strings.ToLower(m.Content), strings.ToLower("muppet")) {
 			n := rand.Int() % len(ToddPhrases)
 			s.ChannelMessageSend(m.ChannelID, ToddPhrases[n])
 		}
 
-		if strings.Contains(strings.ToLower(m.Content), strings.ToLower("oops")) {
-			rand.Seed(time.Now().Unix())
-			n := rand.Int() % len(BenPhrases)
-			s.ChannelMessageSend(m.ChannelID, BenPhrases[n])
-		}
+	if strings.Contains(strings.ToLower(m.Content), strings.ToLower("oops")) {
+		n := rand.Int() % len(BenPhrases)
+		s.ChannelMessageSend(m.ChannelID, BenPhrases[n])
 	}
 }

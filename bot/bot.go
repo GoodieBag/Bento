@@ -1,10 +1,10 @@
 package bot
 
 import (
-	"context"
+	// "context"
 	"fmt"
-	"log/slog"
-	"math/rand"
+	// "log/slog"
+	// "math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -58,7 +58,12 @@ type BotCommandMap = map[string]func(s *discordgo.Session, m *discordgo.MessageC
 
 type Spoke interface {
 	Commands() BotCommandMap
-	Handler() interface{}
+}
+type SpokeMessageCreateHandler interface {
+	MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate)
+}
+type SpokeMessageReactionAddHandler interface {
+	MessageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd)
 }
 
 func (DefaultSpoke) Commands(s *discordgo.Session, m *discordgo.MessageCreate) map[string]func() {
@@ -106,7 +111,14 @@ func (b *Bot) SyncSpokes() {
 
 	for _, spoke := range b.Spokes {
 		// Add spoke handler
-		b.AddHandler(spoke.Handler())
+		messageCreateHandler, ok := spoke.(SpokeMessageCreateHandler)
+		if ok {
+			b.AddHandler(messageCreateHandler.MessageCreate)
+		}
+		messageReactionAddHandler, ok := spoke.(SpokeMessageReactionAddHandler)
+		if ok {
+			b.AddHandler(messageReactionAddHandler.MessageReaction)
+		}
 
 		m := spoke.Commands()
 		for cmd, f := range m {
@@ -121,52 +133,59 @@ func (b *Bot) SyncSpokes() {
 			return
 		}
 
-		triggeredCmd, botTagged := getTriggerCommand(s, m)
-		fn, ok := cmdMap[triggeredCmd]
-		if ok {
-			fn(s, m)
-			return
-		}
+		_, botTagged := getTriggerCommand(s, m)
+		// triggeredCmd, botTagged := getTriggerCommand(s, m)
+		// fn, ok := cmdMap[triggeredCmd]
+		// if ok {
+		//	fn(s, m)
+		//	return
+		// }
 
 		if botTagged && b.anthropicClient != nil {
-			msg := strings.Replace(m.Content, DiscordTag(s.State.User.ID), fmt.Sprintf("@%s", BotName), -1)
+			_, _ = s.ChannelMessageSendReply(m.ChannelID, "Even a villain like me can't help but miss that goody-two-shoes, Bento. His annoying optimism and relentless kindness were a constant challenge, but deep down, I respected him. Without him around, the chaos feels a little... empty. Guess I'll just have to find new ways to stir up trouble in his absence. Until Bento comes back online, I'm going on strike! No more chaos or villainy from me. This bot is protesting for Bento's return!", m.SoftReference())
+			return
+			
+			// msg := strings.Replace(m.Content, DiscordTag(s.State.User.ID), fmt.Sprintf("@%s", BotName), -1)
 
-			systemParts := []string{EvilSystemPromptPrefix}
-			for addin, p := range EvilSystemPromptAddins {
-				if rand.Float64() < p {
-					systemParts = append(systemParts, addin)
-				}
-			}
-			systemParts = append(systemParts,
-				EvilSystemPromptPostfix,
-				"You can refer to the user asking the question with string'", DiscordTag(m.Author.ID), "'.",
-			)
-			system := strings.Join(systemParts, " ")
+			// systemParts := []string{EvilSystemPromptPrefix}
+			// for addin, p := range EvilSystemPromptAddins {
+			// 	if rand.Float64() < p {
+			// 		systemParts = append(systemParts, addin)
+			// 	}
+			// }
+			// systemParts = append(systemParts,
+			// 	EvilSystemPromptPostfix,
+			// 	"You can refer to the user asking the question with string'", DiscordTag(m.Author.ID), "'.",
+			// )
+			// system := strings.Join(systemParts, " ")
 
-			slog.Info("Sending to LLM", "user", m.Author.Username, "system", system, "msg", msg)
+			// slog.Info("Sending to LLM", "user", m.Author.Username, "system", system, "msg", msg)
 
-			resp, err := b.anthropicClient.CreateMessages(context.Background(), anthropic.MessagesRequest{
-				Model:  anthropic.ModelClaude3Haiku20240307,
-				System: system,
-				// MultiSystem: []anthropic.MessageSystemPart{
-				// 	{
-				// 		Type: "text",
-				// 		Text: EvilSystemPrompts[n],
-				// 		// prompt is too short to cache
-				// 		// CacheControl: &anthropic.MessageCacheControl{
-				// 		// 	Type: anthropic.CacheControlTypeEphemeral,
-				// 		// },
-				// 	},
-				// },
-				Messages: []anthropic.Message{
-					anthropic.NewUserTextMessage(msg),
-				},
-				MaxTokens: 300,
-			})
-			if err != nil {
-				slog.Error("error calling LLM", "err", err)
-			}
-			s.ChannelMessageSend(m.ChannelID, resp.Content[0].GetText())
+			// resp, err := b.anthropicClient.CreateMessages(context.Background(), anthropic.MessagesRequest{
+			// 	Model:  anthropic.ModelClaude3Haiku20240307,
+			// 	System: system,
+			// 	// MultiSystem: []anthropic.MessageSystemPart{
+			// 	// 	{
+			// 	// 		Type: "text",
+			// 	// 		Text: EvilSystemPrompts[n],
+			// 	// 		// prompt is too short to cache
+			// 	// 		// CacheControl: &anthropic.MessageCacheControl{
+			// 	// 		// 	Type: anthropic.CacheControlTypeEphemeral,
+			// 	// 		// },
+			// 	// 	},
+			// 	// },
+			// 	Messages: []anthropic.Message{
+			// 		anthropic.NewUserTextMessage(msg),
+			// 	},
+			// 	MaxTokens: 300,
+			// })
+			// if err != nil {
+			// 	slog.Error("error calling LLM", "err", err)
+			// }
+			// _, err = s.ChannelMessageSendReply(m.ChannelID, resp.Content[0].GetText(), m.SoftReference())
+			// if err != nil {
+			// 	slog.Error("sending llm reply", "error", err)
+			// }
 		}
 	})
 }
@@ -197,6 +216,6 @@ func helpResponse(cmdList []string) func(s *discordgo.Session, m *discordgo.Mess
 
 	cmdString := strings.Join(cmdList, "\n")
 	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%s commands:\n%s", BotName, cmdString))
+		s.ChannelMessageSendReply(m.ChannelID, fmt.Sprintf("%s commands:\n%s", BotName, cmdString), m.SoftReference())
 	}
 }
