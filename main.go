@@ -32,6 +32,7 @@ func main() {
 
 	b.RegisterSpoke(general.GetPrefix())
 	b.RegisterSpoke(hangman.GetHangManSpoke())
+	b.RegisterSpoke(general.GetAntiEvil())
 
 	b.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 

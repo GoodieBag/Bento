@@ -134,17 +134,19 @@ func (b *Bot) SyncSpokes() {
 		}
 
 		_, botTagged := getTriggerCommand(s, m)
-		// triggeredCmd, botTagged := getTriggerCommand(s, m)
-		// fn, ok := cmdMap[triggeredCmd]
-		// if ok {
-		//	fn(s, m)
-		//	return
-		// }
-
-		if botTagged && b.anthropicClient != nil {
-			_, _ = s.ChannelMessageSendReply(m.ChannelID, "Even a villain like me can't help but miss that goody-two-shoes, Bento. His annoying optimism and relentless kindness were a constant challenge, but deep down, I respected him. Without him around, the chaos feels a little... empty. Guess I'll just have to find new ways to stir up trouble in his absence. Until Bento comes back online, I'm going on strike! No more chaos or villainy from me. This bot is protesting for Bento's return!", m.SoftReference())
+		triggeredCmd, botTagged := getTriggerCommand(s, m)
+		fn, ok := cmdMap[triggeredCmd]
+		if ok {
+			fn(s, m)
 			return
-			
+		}
+
+		if botTagged && !Evil {
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@1276413143299522685> Please take this question : %s", m.Content))
+		}
+
+		if botTagged && b.anthropicClient != nil && Evil {
+
 			// msg := strings.Replace(m.Content, DiscordTag(s.State.User.ID), fmt.Sprintf("@%s", BotName), -1)
 
 			// systemParts := []string{EvilSystemPromptPrefix}
