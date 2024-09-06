@@ -3,7 +3,7 @@ package bot
 import (
 	// "context"
 	"fmt"
-	// "log/slog"
+	//"log/slog"
 	// "math/rand"
 	"os"
 	"strconv"
@@ -18,6 +18,7 @@ import (
 var (
 	BotName                 string = envOrDefault("BENTO_NAME", "Bento")
 	BotPrefix               string = envOrDefault("BENTO_PREFIX", ".")
+	EvilId                         = "1276413143299522685"
 	Evil                    bool   = envOrDefaultBool("BENTO_EVIL", false)
 	EvilSystemPromptPrefix  string = `You are a Discord bot named Evil Bento. Your role is to interact with users in a playful yet mischievous manner. You should provide short, witty, and convincing responses that embody your "evil" persona.`
 	EvilSystemPromptPostfix string = "Remember to avoid hallucinations and refrain from fabricating any factual information. Keep the tone light-hearted and engaging!"
@@ -134,17 +135,20 @@ func (b *Bot) SyncSpokes() {
 		}
 
 		_, botTagged := getTriggerCommand(s, m)
-		// triggeredCmd, botTagged := getTriggerCommand(s, m)
-		// fn, ok := cmdMap[triggeredCmd]
-		// if ok {
-		//	fn(s, m)
-		//	return
-		// }
-
-		if botTagged && b.anthropicClient != nil {
-			_, _ = s.ChannelMessageSendReply(m.ChannelID, "Even a villain like me can't help but miss that goody-two-shoes, Bento. His annoying optimism and relentless kindness were a constant challenge, but deep down, I respected him. Without him around, the chaos feels a little... empty. Guess I'll just have to find new ways to stir up trouble in his absence. Until Bento comes back online, I'm going on strike! No more chaos or villainy from me. This bot is protesting for Bento's return!", m.SoftReference())
+		triggeredCmd, botTagged := getTriggerCommand(s, m)
+		fn, ok := cmdMap[triggeredCmd]
+		if ok {
+			fn(s, m)
 			return
-			
+		}
+
+		if botTagged && !Evil && m.Author.ID != EvilId {
+			content := strings.TrimLeft(m.Content, "<@1155684408309846117>")
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s> Please take this question : %s", EvilId, content))
+		}
+
+		if botTagged && b.anthropicClient != nil && Evil {
+
 			// msg := strings.Replace(m.Content, DiscordTag(s.State.User.ID), fmt.Sprintf("@%s", BotName), -1)
 
 			// systemParts := []string{EvilSystemPromptPrefix}

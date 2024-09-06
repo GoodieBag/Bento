@@ -28,17 +28,32 @@ func getRapidToken() string {
 	return token
 }
 
+func getDurationUntil10Am() time.Duration {
+	now := time.Now()
+	// Set the target time to 10 AM of the current day
+	target := time.Date(now.Year(), now.Month(), now.Day(), 10, 0, 0, 0, now.Location())
+
+	// If current time is after 10 AM, calculate for the next day's 9 AM
+	if now.After(target) {
+		target = target.Add(24 * time.Hour)
+	}
+
+	// Calculate the duration between now and the target time
+	duration := target.Sub(now)
+
+	return duration
+}
+
 func StartJob(s *discordgo.Session) {
-	QueryQuote(s)
-	ticker := time.NewTicker(24 * time.Hour)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				QueryQuote(s)
-			}
+	duration := getDurationUntil10Am()
+	time.AfterFunc(duration, func() {
+		QueryQuote(s)
+		ticker := time.NewTicker(24 * time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			QueryQuote(s)
 		}
-	}()
+	})
 }
 
 func QueryQuote(s *discordgo.Session) {
@@ -79,7 +94,6 @@ func QueryQuote(s *discordgo.Session) {
 	}
 
 	msg := fmt.Sprintf(" :bulb: Quote of the day :bulb:\n > %s", quoteResponse.Text)
-
 
 	for _, c := range subscribedChannels {
 		if c == fedxLobby {
