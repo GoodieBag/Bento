@@ -28,7 +28,7 @@ func getRapidToken() string {
 	return token
 }
 
-func firstQuoteAt10Am(s *discordgo.Session) {
+func getDurationUntil10Am() time.Duration {
 	now := time.Now()
 	// Set the target time to 10 AM of the current day
 	target := time.Date(now.Year(), now.Month(), now.Day(), 10, 0, 0, 0, now.Location())
@@ -41,41 +41,19 @@ func firstQuoteAt10Am(s *discordgo.Session) {
 	// Calculate the duration between now and the target time
 	duration := target.Sub(now)
 
-	// Convert duration to hours
-	hours := duration.Hours()
-
-	// Print the number of hours
-
-	doneChan := make(chan bool)
-
-	ticker := time.NewTicker(time.Hour * time.Duration(hours))
-	// Run the ticker loop in a separate goroutine
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				QueryQuote(s)
-				doneChan <- true
-
-			case <-doneChan:
-				return
-			}
-		}
-	}()
-
+	return duration
 }
 
 func StartJob(s *discordgo.Session) {
-	firstQuoteAt10Am(s)
-	ticker := time.NewTicker(24 * time.Hour)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				QueryQuote(s)
-			}
+	duration := getDurationUntil10Am()
+	time.AfterFunc(duration, func() {
+		QueryQuote(s)
+		ticker := time.NewTicker(24 * time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			QueryQuote(s)
 		}
-	}()
+	})
 }
 
 func QueryQuote(s *discordgo.Session) {

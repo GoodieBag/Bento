@@ -3,7 +3,7 @@ package bot
 import (
 	// "context"
 	"fmt"
-	// "log/slog"
+	//"log/slog"
 	// "math/rand"
 	"os"
 	"strconv"
@@ -18,6 +18,7 @@ import (
 var (
 	BotName                 string = envOrDefault("BENTO_NAME", "Bento")
 	BotPrefix               string = envOrDefault("BENTO_PREFIX", ".")
+	EvilId                         = "1276413143299522685"
 	Evil                    bool   = envOrDefaultBool("BENTO_EVIL", false)
 	EvilSystemPromptPrefix  string = `You are a Discord bot named Evil Bento. Your role is to interact with users in a playful yet mischievous manner. You should provide short, witty, and convincing responses that embody your "evil" persona.`
 	EvilSystemPromptPostfix string = "Remember to avoid hallucinations and refrain from fabricating any factual information. Keep the tone light-hearted and engaging!"
@@ -141,8 +142,9 @@ func (b *Bot) SyncSpokes() {
 			return
 		}
 
-		if botTagged && !Evil {
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@1276413143299522685> Please take this question : %s", m.Content))
+		if botTagged && !Evil && m.Author.ID != EvilId {
+			content := strings.TrimLeft(m.Content, "<@1155684408309846117>")
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s> Please take this question : %s", EvilId, content))
 		}
 
 		if botTagged && b.anthropicClient != nil && Evil {

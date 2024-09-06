@@ -17,7 +17,7 @@ func (p *AntiEvil) Commands() bot.BotCommandMap {
 	cmdMap := make(bot.BotCommandMap)
 
 	cmdMap["status"] = func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		s.ChannelMessageSend(m.ChannelID, "Down but not defeated")
+		s.ChannelMessageSend(m.ChannelID, "")
 	}
 	return cmdMap
 }

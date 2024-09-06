@@ -27,12 +27,12 @@ func main() {
 		b.RegisterSpoke(evil.GetEvil())
 	} else {
 		b.RegisterSpoke(dialogues.GetDialogues())
+		b.RegisterSpoke(general.GetAntiEvil())
 		jobs.StartJob(b.Session)
 	}
 
 	b.RegisterSpoke(general.GetPrefix())
 	b.RegisterSpoke(hangman.GetHangManSpoke())
-	b.RegisterSpoke(general.GetAntiEvil())
 
 	b.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 

@@ -180,6 +180,10 @@ func (p *Dialogues) MessageCreate(s *discordgo.Session, m *discordgo.MessageCrea
 		return
 	}
 
+	if m.Author.ID == bot.EvilId {
+		return
+	}
+
 	if strings.Contains(strings.ToLower(m.Content), strings.ToLower("muppet")) {
 		n := rand.Int() % len(ToddPhrases)
 		s.ChannelMessageSend(m.ChannelID, ToddPhrases[n])
