@@ -29,7 +29,13 @@ func getRapidToken() string {
 }
 
 func getDurationUntil10Am() time.Duration {
-	now := time.Now()
+	now := time.Now().UTC()
+
+	loc, err := time.LoadLocation("America/Los_Angeles")
+	if err != nil {
+		panic(fmt.Sprintf("Failed to load location: %v", err))
+	}
+	now = now.In(loc)
 	// Set the target time to 10 AM of the current day
 	target := time.Date(now.Year(), now.Month(), now.Day(), 10, 0, 0, 0, now.Location())
 

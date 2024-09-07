@@ -20,8 +20,14 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /bento
 # Stage 2: Runtime
 FROM alpine:latest
 
+# Install tzdata
+RUN apk add --no-cache tzdata
+
 # Copy the binary from the builder stage
 COPY --from=builder /bento /bento
+
+# Set timezone environment variable (optional)
+ENV TZ=America/Los_Angeles
 
 # Run
 CMD ["/bento"]
