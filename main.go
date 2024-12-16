@@ -27,6 +27,7 @@ func main() {
 		b.RegisterSpoke(evil.GetEvil())
 	} else {
 		b.RegisterSpoke(dialogues.GetDialogues())
+		b.RegisterSpoke(general.GetAntiEvil())
 		jobs.StartJob(b.Session)
 	}
 
